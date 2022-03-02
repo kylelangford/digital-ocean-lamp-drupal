@@ -1,21 +1,30 @@
-Linkwell
+## Server Configuration
 
-Steps
+## Steps
 
 1. Create Subdomains
 2. Use ubuntu with LAMP (1 Step sets up PHP, MYSQL, Firewall)
 3. Use Password Auth (set root pw)
 4. SSH in as Root
-5. Create new user (https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-20-04) (https://www.digitalocean.com/community/tutorials/how-to-create-a-new-sudo-enabled-user-on-ubuntu-18-04-quickstart)
+'''
+ssh root@http:64.225.52.153
+'''
 
+6. Create new user (https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-20-04) (https://www.digitalocean.com/community/tutorials/how-to-create-a-new-sudo-enabled-user-on-ubuntu-18-04-quickstart)
+
+'''
 adduser orion
 adduser lynx
-       usermod -aG sudo orion
-usermod -aG sudo lynx su - orion
+usermod -aG sudo orion
+usermod -aG sudo lynx
+su - orion
+'''
 
 6. Create Database (x2)(Client, Content) (https://www.digitalocean.com/community/tutorials/how-to-create-and-manage-databases-in-mysql-and-mariadb-on-a-cloud-server)
+
 The MySQL root password is in ~/.digitalocean_password.
 
+'''
 sudo mysql -u root -p
 CREATE DATABASE client-orion;
 CREATE DATABASE content-orion;
@@ -23,19 +32,22 @@ CREATE USER 'linkwell'@'localhost' IDENTIFIED BY 'linkwell';
 GRANT ALL PRIVILEGES ON client_orion . * TO 'linkwell'@'localhost';
 GRANT ALL PRIVILEGES ON content_orion . * TO 'linkwell'@'localhost';
 EXIT;
+'''
 
 7.  Configure VHOST (MANUAL) (step 4 https://www.digitalocean.com/community/tutorials/how-to-install-linux-apache-mysql-php-lamp-stack-on-ubuntu-20-04)
 
-	sudo mkdir /var/www/content-orion
-	sudo mkdir /var/www/client-orion 	sudo chown -R $USER:$USER  /var/www/client-orion
- sudo chown -R $USER:$USER  /var/www/content-orion
-
- sudo nano /etc/apache2/sites-availlable/content-orion.linkwellhealth.com.conf
+'''
+sudo mkdir /var/www/content-orion
+sudo mkdir /var/www/client-orion
+sudo chown -R $USER:$USER  /var/www/client-orion
+sudo chown -R $USER:$USER  /var/www/content-orion
+sudo nano /etc/apache2/sites-availlable/content-orion.linkwellhealth.com.conf
+'''
 
 <VirtualHost *:80>
-        ServerName content-orion.linkwellhealth.com
-        ServerAlias www.content-orion.linkwellhealth.com
-        DocumentRoot /var/www/content-orion.linkwellhealth.com/drupal/web
+	ServerName content-orion.linkwellhealth.com
+	ServerAlias www.content-orion.linkwellhealth.com
+	DocumentRoot /var/www/content-orion.linkwellhealth.com/drupal/web
 </VirtualHost>
 
  sudo nano /etc/apache2/sites-availlable/client-orion.linkwellhealth.com.conf
@@ -69,6 +81,7 @@ To use Certbot, you’ll need a registered domain name and two DNS records:
 
 # for some reason the php cli version and the apache version are different I found the easiest way to fix this was to set the cli version to 8.0 and install modules for 8.0 instead of 8.1
 
+'''
 sudo update-alternatives --config php
 (Select 8.0 or option 3)
 
@@ -76,6 +89,7 @@ sudo apt-get install php8.0-dom
 # sudo apt-get install php8.0-gd
 sudo apt-get install php8.0-mbstring
 sudo systemctl restart apache2
+'''
 
 9. Install Composer (https://www.digitalocean.com/community/tutorials/how-to-install-and-use-composer-on-ubuntu-20-04)
 10. Install Drupal 9 with composer (https://www.drupal.org/docs/develop/using-composer/using-composer-to-install-drupal-and-manage-dependencies)
