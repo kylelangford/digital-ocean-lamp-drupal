@@ -119,6 +119,8 @@ sudo systemctl restart apache2
 
 ### Install Composer 
 
+Follow the directions!
+
 reference: https://www.digitalocean.com/community/tutorials/how-to-install-and-use-composer-on-ubuntu-20-04
 
 ### Install Drupal 9 with composer
