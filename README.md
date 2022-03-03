@@ -1,138 +1,162 @@
-## Server Configuration
+# Drupal 9 on Ubuntu 20.04 using Digital Ocean
 
-## Steps
+### Hosting - Digital Ocean
 
-1. Create Subdomains
-2. Use ubuntu with LAMP (1 Step sets up PHP, MYSQL, Firewall)
-3. Use Password Auth (set root pw)
-4. SSH in as Root
-'''
-ssh root@http:64.225.52.153
-'''
+- 1 Step Droplet - **Use Ubuntu with LAMP**
+- Use **Password Auth** to avoid issues with SSH
+- SSH in as `ssh root@64.225.52.153`
 
-6. Create new user (https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-20-04) (https://www.digitalocean.com/community/tutorials/how-to-create-a-new-sudo-enabled-user-on-ubuntu-18-04-quickstart)
+**Full Guide:** (1 Step LAMP skips to step 4)
+https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-20-04 
 
-'''
+### Create subdomains
+
+Digital Ocean - Add A Records
+DNS Registrar - Create A Records
+
+    www.sub.mydomain.com
+    sub.mydomain.com
+
+
+### Create Linux user 
+
+This will create two users with sudo privileges, switch to user.
+
+```bash
 adduser orion
-adduser lynx
 usermod -aG sudo orion
-usermod -aG sudo lynx
 su - orion
-'''
+```
 
-6. Create Database (x2)(Client, Content) (https://www.digitalocean.com/community/tutorials/how-to-create-and-manage-databases-in-mysql-and-mariadb-on-a-cloud-server)
+reference: https://www.digitalocean.com/community/tutorials/how-to-create-a-new-sudo-enabled-user-on-ubuntu-18-04-quickstart
 
-The MySQL root password is in ~/.digitalocean_password.
+### Create Database and assign new MySql user
 
-'''
+Create two databases and a new MySql user. Assign the user full privalages to each database. 
+
+The MySQL root password is in `~/.digitalocean_password.`
+
+```sql
 sudo mysql -u root -p
-CREATE DATABASE client-orion;
-CREATE DATABASE content-orion;
+CREATE DATABASE client_orion;
+CREATE DATABASE content_orion;
 CREATE USER 'linkwell'@'localhost' IDENTIFIED BY 'linkwell';
 GRANT ALL PRIVILEGES ON client_orion . * TO 'linkwell'@'localhost';
 GRANT ALL PRIVILEGES ON content_orion . * TO 'linkwell'@'localhost';
 EXIT;
-'''
+```
 
-7.  Configure VHOST (MANUAL) (step 4 https://www.digitalocean.com/community/tutorials/how-to-install-linux-apache-mysql-php-lamp-stack-on-ubuntu-20-04)
+reference: https://www.digitalocean.com/community/tutorials/how-to-create-and-manage-databases-in-mysql-and-mariadb-on-a-cloud-server
 
-'''
-sudo mkdir /var/www/content-orion
-sudo mkdir /var/www/client-orion
-sudo chown -R $USER:$USER  /var/www/client-orion
-sudo chown -R $USER:$USER  /var/www/content-orion
-sudo nano /etc/apache2/sites-availlable/content-orion.linkwellhealth.com.conf
-'''
+### Configure VHOST 
 
-<VirtualHost *:80>
-	ServerName content-orion.linkwellhealth.com
-	ServerAlias www.content-orion.linkwellhealth.com
-	DocumentRoot /var/www/content-orion.linkwellhealth.com/drupal/web
-</VirtualHost>
+Create two directories in `/var/www/`
 
- sudo nano /etc/apache2/sites-availlable/client-orion.linkwellhealth.com.conf
+```bash
+sudo mkdir content-orion
+sudo mkdir client-orion
+sudo chown -R $USER:$USER  client-orion
+sudo chown -R $USER:$USER  content-orion
+```
 
-<VirtualHost *:80>
+Create configuration files `/etc/apache2/sites-availlable/`
+
+```
+sudo nano content-orion.linkwellhealth.com.conf
+```
+    <VirtualHost *:80>
+	    ServerName content-orion.linkwellhealth.com
+	    ServerAlias www.content-orion.linkwellhealth.com
+	    DocumentRoot /var/www/content-orion.linkwellhealth.com/drupal/web
+    </VirtualHost>
+
+```
+sudo nano client-orion.linkwellhealth.com.conf
+``` 
+
+    <VirtualHost *:80>
         ServerName client-orion.linkwellhealth.com
         ServerAlias client-orion.linkwellhealth.com
         DocumentRoot /var/www/client-orion.linkwellhealth.com/drupal/web
-</VirtualHost>
+    </VirtualHost>
 
+Enable sites, will create a symlink in  `/etc/apache2/sites-enabled/`
+```
 sudo a2ensite content-orion.linkwellhealth.com.conf
 sudo a2ensite client-orion.linkwellhealth.com.conf
 sudo systemctl restart apache2
+```
 
-8. SSL Cert (Start at 4)(https://www.digitalocean.com/community/tutorials/how-to-secure-apache-with-let-s-encrypt-on-ubuntu-18-04)  sudo certbot --apache (choose redirect) 
-To use Certbot, you’ll need a registered domain name and two DNS records:
+reference: https://www.digitalocean.com/community/tutorials/how-to-install-linux-apache-mysql-php-lamp-stack-on-ubuntu-20-04 (step 4)
+
+### SSL 
+
+This is the easiest and recomended way to install SSL and automatically edit the vhost configuration files.
+
+`sudo certbot --apache`
+
+**note** - Choose redirect
+
+> To use Certbot, you’ll need a registered domain name and two DNS records:
     * An A record from a domain (e.g., example.com) to the server’s IP address
     * An A record from a domain prefaced with www (e.g., www.example.com) to the server’s IP address
 
-        Afterwards in order to fix clean URLs add this to the ssl conf(*443) for both sites 
+reference: https://www.digitalocean.com/community/tutorials/how-to-secure-apache-with-let-s-encrypt-on-ubuntu-18-04 (Start at 4)
 
-  <Directory /var/www/client-orion.linkwellhealth.com/drupal/web/>
-     AllowOverride All
-  </Directory>
+### Install Drupal Dependencies
 
-  <Directory /var/www/content-orion.linkwellhealth.com/drupal/web/>
-     AllowOverride All
-  </Directory>
+Feedback from initial test install showed dom, xml, SimpleXML, and mbstring php modules are missing. You can resolve this by running the following. (dom with install xml, SimpleXML)
 
-8. Install Drupal Dependencies
-
-# for some reason the php cli version and the apache version are different I found the easiest way to fix this was to set the cli version to 8.0 and install modules for 8.0 instead of 8.1
-
-'''
-sudo update-alternatives --config php
-(Select 8.0 or option 3)
-
+```
 sudo apt-get install php8.0-dom
-# sudo apt-get install php8.0-gd
 sudo apt-get install php8.0-mbstring
 sudo systemctl restart apache2
-'''
+```
 
-9. Install Composer (https://www.digitalocean.com/community/tutorials/how-to-install-and-use-composer-on-ubuntu-20-04)
-10. Install Drupal 9 with composer (https://www.drupal.org/docs/develop/using-composer/using-composer-to-install-drupal-and-manage-dependencies)
+**Note** - For some reason the php cli version and the apache version are different I found the easiest way to fix this was to set the cli version to 8.0 and install modules for 8.0 instead of 8.1. (should match what phpinfo() shows.)
 
-sudo chown -R orion:www-data default/
+`sudo update-alternatives --config php`
+
+### Install Composer 
+
+reference: https://www.digitalocean.com/community/tutorials/how-to-install-and-use-composer-on-ubuntu-20-04
+
+### Install Drupal 9 with composer
+
+Download and Install Dependencies
+
+`composer create-project drupal/recommended-project drupal`
+
+**note** - Fix write permissions by assigning the correct group 
+
+`sudo chown -R orion:www-data sites/default/` 
+
+```console
+# Manual Steps
 sudo cp default.settings.php settings.php
-sudo chmod 777 settings.php (after -> sudo chmod 755 settings.php)
-11. Install.php
-db: client-orion
-db: content-orion
+sudo chmod 777 settings.php
+```
 
-=========================================================
+reference: https://www.drupal.org/docs/develop/using-composer/using-composer-to-install-drupal-and-manage-dependencies
 
-Droplet - Drupal Test Env
+### Fix Clean URLs
 
-ip: 64.225.52.153
-http://64.225.52.153/info.php
+In order to fix clean URLs add this to the ssl conf(*443) for both sites 
 
-linux: root  
-p: s3cur3T3st
+`client-orion.linkwellhealth.com.conf`
 
-linux: orion
-p: Qtj3p8ZhpanQ7Baa
+    <Directory /var/www/client-orion.linkwellhealth.com/drupal/web/>
+        AllowOverride All
+    </Directory>
 
-linux: lynx
-p: Qtj3p8ZhpanQ7Baa
+`content-orion.linkwellhealth.com.conf`
 
-mysql: root
-p: 80a6c5d8215dc8201bbe763c5c5b266327eac021f9acf825
+    <Directory /var/www/content-orion.linkwellhealth.com/drupal/web/>
+       AllowOverride All
+    </Directory>
 
-mysql: linkwell 
-p: linkwell
+### Run Install.php
 
-http://content-orion.linkwellhealth.com/
-https://client-orion.linkwellhealth.com/
-
-U: linkwell
-p: Candidate!
-
-
-https://github.com/Linkwellhealthinc/content-orion
-https://github.com/Linkwellhealthinc/client-orion
-
-Have User
-  git config --global user.email "you@example.com"
-  git config --global user.name "Your Name"
+1. Complete Prompts
+2. 
+3. Profit!
