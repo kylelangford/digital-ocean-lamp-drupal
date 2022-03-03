@@ -6,7 +6,7 @@
 - Use **Password Auth** to avoid issues with SSH
 - SSH in as `ssh root@64.225.52.153`
 
-**Full Guide:** (1 Step LAMP skips to step 4)
+**Go on your own:** (1 Step LAMP skips to step 4)
 https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-20-04 
 
 ### Create subdomains
