@@ -14,8 +14,8 @@ https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubunt
 Digital Ocean - Add A Records
 DNS Registrar - Create A Records
 
-    www.sub.mydomain.com
-    sub.mydomain.com
+    www.subdomain.mydomain.com
+    subdomain.mydomain.com
 
 
 ### Create Linux user 
@@ -23,9 +23,9 @@ DNS Registrar - Create A Records
 This will create two users with sudo privileges, switch to user.
 
 ```bash
-adduser orion
-usermod -aG sudo orion
-su - orion
+adduser candidate
+usermod -aG sudo candidate
+su - candidate
 ```
 
 reference: https://www.digitalocean.com/community/tutorials/how-to-create-a-new-sudo-enabled-user-on-ubuntu-18-04-quickstart
@@ -38,11 +38,11 @@ The MySQL root password is in `~/.digitalocean_password.`
 
 ```sql
 sudo mysql -u root -p
-CREATE DATABASE client_orion;
-CREATE DATABASE content_orion;
+CREATE DATABASE client;
+CREATE DATABASE content;
 CREATE USER 'linkwell'@'localhost' IDENTIFIED BY 'linkwell';
-GRANT ALL PRIVILEGES ON client_orion . * TO 'linkwell'@'localhost';
-GRANT ALL PRIVILEGES ON content_orion . * TO 'linkwell'@'localhost';
+GRANT ALL PRIVILEGES ON client . * TO 'linkwell'@'localhost';
+GRANT ALL PRIVILEGES ON content . * TO 'linkwell'@'localhost';
 EXIT;
 ```
 
@@ -53,10 +53,10 @@ reference: https://www.digitalocean.com/community/tutorials/how-to-create-and-ma
 Create two directories in `/var/www/`
 
 ```bash
-sudo mkdir content-orion
-sudo mkdir client-orion
-sudo chown -R $USER:$USER  client-orion
-sudo chown -R $USER:$USER  content-orion
+sudo mkdir client-subdomain.mydomain.com
+sudo mkdir content-subdomain.mydomain.com
+sudo chown -R $USER:$USER  client-subdomain.mydomain.com
+sudo chown -R $USER:$USER  content-subdomain.mydomain.com
 ```
 
 Create configuration files `/etc/apache2/sites-availlable/`
@@ -65,9 +65,9 @@ Create configuration files `/etc/apache2/sites-availlable/`
 sudo nano content-orion.linkwellhealth.com.conf
 ```
     <VirtualHost *:80>
-	    ServerName content-orion.linkwellhealth.com
-	    ServerAlias www.content-orion.linkwellhealth.com
-	    DocumentRoot /var/www/content-orion.linkwellhealth.com/drupal/web
+	    ServerName content-subdomain.mydomain.com
+	    ServerAlias www.content-subdomain.mydomain.com
+	    DocumentRoot /var/www/content-subdomain.mydomain.com/drupal/web
     </VirtualHost>
 
 ```
@@ -75,15 +75,15 @@ sudo nano client-orion.linkwellhealth.com.conf
 ``` 
 
     <VirtualHost *:80>
-        ServerName client-orion.linkwellhealth.com
-        ServerAlias client-orion.linkwellhealth.com
+        ServerName client-subdomain.mydomain.com
+        ServerAlias client-subdomain.mydomain.com
         DocumentRoot /var/www/client-orion.linkwellhealth.com/drupal/web
     </VirtualHost>
 
 Enable sites, will create a symlink in  `/etc/apache2/sites-enabled/`
 ```
-sudo a2ensite content-orion.linkwellhealth.com.conf
-sudo a2ensite client-orion.linkwellhealth.com.conf
+sudo a2ensite content-subdomain.mydomain.com.conf
+sudo a2ensite client-subdomain.mydomain.com.conf
 sudo systemctl restart apache2
 ```
 
@@ -129,12 +129,11 @@ Download and Install Dependencies
 
 `composer create-project drupal/recommended-project drupal`
 
-**note** - Fix write permissions by assigning the correct group 
-
-`sudo chown -R orion:www-data sites/default/` 
+**note** - Fix write permissions `sites/default/`
 
 ```console
 # Manual Steps
+sudo chown -R $USER:www-data sites/default/
 sudo cp default.settings.php settings.php
 sudo chmod 777 settings.php
 ```
