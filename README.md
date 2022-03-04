@@ -4,7 +4,7 @@
 
 - 1 Step Droplet - **Use Ubuntu with LAMP**
 - Use **Password Auth** to avoid issues with SSH
-- SSH in as `ssh root@64.225.52.153`
+- SSH in as `ssh root@IP_ADDRESS`
 
 **Go on your own:** (1 Step LAMP skips to step 4)
 https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-20-04 
@@ -23,9 +23,9 @@ DNS Registrar - Create A Records
 This will create two users with sudo privileges, switch to user.
 
 ```bash
-adduser candidate
-usermod -aG sudo candidate
-su - candidate
+adduser myusername
+usermod -aG sudo myusername
+su - myusername
 ```
 
 reference: https://www.digitalocean.com/community/tutorials/how-to-create-a-new-sudo-enabled-user-on-ubuntu-18-04-quickstart
@@ -40,9 +40,9 @@ The MySQL root password is in `~/.digitalocean_password.`
 sudo mysql -u root -p
 CREATE DATABASE client;
 CREATE DATABASE content;
-CREATE USER 'linkwell'@'localhost' IDENTIFIED BY 'linkwell';
-GRANT ALL PRIVILEGES ON client . * TO 'linkwell'@'localhost';
-GRANT ALL PRIVILEGES ON content . * TO 'linkwell'@'localhost';
+CREATE USER 'newuser'@'localhost' IDENTIFIED BY 'newuser';
+GRANT ALL PRIVILEGES ON client . * TO 'newuser'@'localhost';
+GRANT ALL PRIVILEGES ON content . * TO 'newuser'@'localhost';
 EXIT;
 ```
 
@@ -62,7 +62,7 @@ sudo chown -R $USER:$USER  content-subdomain.mydomain.com
 Create configuration files `/etc/apache2/sites-availlable/`
 
 ```
-sudo nano content-orion.linkwellhealth.com.conf
+sudo nano content-subdomain.mydomain.com.conf
 ```
     <VirtualHost *:80>
 	    ServerName content-subdomain.mydomain.com
@@ -71,13 +71,13 @@ sudo nano content-orion.linkwellhealth.com.conf
     </VirtualHost>
 
 ```
-sudo nano client-orion.linkwellhealth.com.conf
+sudo nano client-subdomain.mydomain.com.conf
 ``` 
 
     <VirtualHost *:80>
         ServerName client-subdomain.mydomain.com
         ServerAlias client-subdomain.mydomain.com
-        DocumentRoot /var/www/client-orion.linkwellhealth.com/drupal/web
+        DocumentRoot /var/www/client-subdomain.mydomain.com/drupal/web
     </VirtualHost>
 
 Enable sites, will create a symlink in  `/etc/apache2/sites-enabled/`
@@ -129,11 +129,11 @@ Download and Install Dependencies
 
 `composer create-project drupal/recommended-project drupal`
 
-**note** - Fix write permissions `sites/default/`
+**note** - Fix write permissions `drupal/web/sites/default/`
 
 ```console
 # Manual Steps
-sudo chown -R $USER:www-data sites/default/
+sudo chown -R $USER:www-data default
 sudo cp default.settings.php settings.php
 sudo chmod 777 settings.php
 ```
@@ -144,15 +144,15 @@ reference: https://www.drupal.org/docs/develop/using-composer/using-composer-to-
 
 In order to fix clean URLs add this to the ssl conf(*443) for both sites 
 
-`client-orion.linkwellhealth.com.conf`
+`client-subdomain.linkwellhealth.com-le-ssl.conf`
 
-    <Directory /var/www/client-orion.linkwellhealth.com/drupal/web/>
+    <Directory /var/www/client-subdomain.mydomain.com/drupal/web/>
         AllowOverride All
     </Directory>
 
-`content-orion.linkwellhealth.com.conf`
+`content-subdomain.linkwellhealth.com-le-ssl.conf`
 
-    <Directory /var/www/content-orion.linkwellhealth.com/drupal/web/>
+    <Directory /var/www/content-subdomain.mydomain.com/drupal/web/>
        AllowOverride All
     </Directory>
 
